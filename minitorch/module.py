@@ -4,14 +4,18 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 
 
 class Module:
-    """Modules form a tree that store parameters and other
-    submodules. They make up the basis of neural network stacks.
+    """Modules form a tree that store parameters and other submodules.
+
+    They make up the basis of neural network stacks.
 
     Attributes
     ----------
-        _modules : Storage of the child modules
-        _parameters : Storage of the module's parameters
-        training : Whether the module is in training mode or evaluation mode
+    _modules : Dict[str, Module]
+        Storage of the child modules.
+    _parameters : Dict[str, Parameter]
+        Storage of the module's parameters.
+    training : bool
+        Whether the module is in training mode or evaluation mode.
 
     """
 
@@ -31,36 +35,54 @@ class Module:
 
     def train(self) -> None:
         """Set the mode of this module and all descendent modules to `train`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        self.training = True
+        for module in self._modules.values():
+            module.train()
 
     def eval(self) -> None:
         """Set the mode of this module and all descendent modules to `eval`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        self.training = False
+        for module in self._modules.values():
+            module.eval()
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """Collect all the parameters of this module and its descendents.
 
         Returns
         -------
+        Sequence[Tuple[str, Parameter]]
             The name and `Parameter` of each ancestor parameter.
 
         """
-        raise NotImplementedError("Need to include this file from past assignment.")
+        params = []
+        for name, param in self._parameters.items():
+            params.append((name, param))
+        for module_name, module in self._modules.items():
+            params.extend(
+                [
+                    (module_name + "." + name, param)
+                    for name, param in module.named_parameters()
+                ]
+            )
+        return params
 
     def parameters(self) -> Sequence[Parameter]:
         """Enumerate over all the parameters of this module and its descendents."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return [param for _, param in self.named_parameters()]
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """Manually add a parameter. Useful helper for scalar parameters.
 
         Args:
         ----
-            k: Local name of the parameter.
-            v: Value for the parameter.
+        k : str
+            Local name of the parameter.
+        v : Any
+            Value for the parameter.
 
         Returns:
         -------
+        Parameter
             Newly created parameter.
 
         """
@@ -85,9 +107,35 @@ class Module:
         return None
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Forward the call to the module's `forward` method.
+
+        Args:
+        ----
+        *args : Any
+            Positional arguments to pass to the `forward` method.
+        **kwargs : Any
+            Keyword arguments to pass to the `forward` method.
+
+        Returns:
+        -------
+        Any
+            The output of the module's `forward` method.
+
+        """
         return self.forward(*args, **kwargs)
 
     def __repr__(self) -> str:
+        """Return a string representation of the module.
+
+        This representation includes all submodules and their structures.
+
+        Returns
+        -------
+        str
+            A string representing the module and its submodules.
+
+        """
+
         def _addindent(s_: str, numSpaces: int) -> str:
             s2 = s_.split("\n")
             if len(s2) == 1:
@@ -120,6 +168,14 @@ class Parameter:
 
     It is designed to hold a `Variable`, but we allow it to hold
     any value for testing.
+
+    Attributes
+    ----------
+    value : Any
+        The value of the parameter, which can be a `Variable` or any type.
+    name : Optional[str]
+        An optional name for the parameter.
+
     """
 
     def __init__(self, x: Any, name: Optional[str] = None) -> None:
@@ -131,7 +187,14 @@ class Parameter:
                 self.value.name = self.name
 
     def update(self, x: Any) -> None:
-        """Update the parameter value."""
+        """Update the parameter value.
+
+        Args:
+        ----
+        x : Any
+            The new value to update the parameter to.
+
+        """
         self.value = x
         if hasattr(x, "requires_grad_"):
             self.value.requires_grad_(True)
@@ -139,7 +202,9 @@ class Parameter:
                 self.value.name = self.name
 
     def __repr__(self) -> str:
+        """Return a string representation of the parameter's value."""
         return repr(self.value)
 
     def __str__(self) -> str:
+        """Return a string representation of the parameter's value."""
         return str(self.value)

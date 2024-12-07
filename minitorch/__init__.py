@@ -1,3 +1,8 @@
+"""Aggregate and re-export modules for simplified usage.
+
+Includes imports for testing, datasets, optimization, tensor operations,
+neural networks, scalar operations, automatic differentiation, and fast/CUDA ops.
+"""
 from .testing import MathTest, MathTestVariable  # type: ignore # noqa: F401,F403
 from .datasets import *  # noqa: F401,F403
 from .optim import *  # noqa: F401,F403
