@@ -5,7 +5,7 @@ from .autodiff import Context
 from .fast_ops import FastOps
 from .tensor import Tensor
 from .tensor_functions import Function, rand
-#correct
+# correct
 
 # List of functions in this file:
 # - avgpool2d: Tiled average pooling 2D
@@ -36,7 +36,7 @@ def tile(input: Tensor, kernel: Tuple[int, int]) -> Tuple[Tensor, int, int]:
     assert height % kh == 0
     assert width % kw == 0
     # TODO: Implement for Task 4.3.
-    #raise NotImplementedError("Need to implement for Task 4.3")
+    # raise NotImplementedError("Need to implement for Task 4.3")
     new_height = height // kh
     new_width = width // kw
 
@@ -71,9 +71,7 @@ def avgpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
     return pooled.view(input.shape[0], input.shape[1], new_height, new_width)
 
 
-
 max_reduce = FastOps.reduce(operators.max, -1e9)
-
 
 
 def argmax(input: Tensor, dim: int) -> Tensor:
@@ -118,6 +116,7 @@ def max(input: Tensor, dim: int) -> Tensor:
 
 # TODO: Implement for Task 4.3.
 
+
 def softmax(input: Tensor, dim: int) -> Tensor:
     """Compute the softmax as tensor.
 
@@ -150,11 +149,11 @@ def logsoftmax(input: Tensor, dim: int) -> Tensor:
     """
     # Max value for numerical stability
     max_input = max(input, dim)
-    
+
     # Subtract the max and exponentiate, sum, and take the log
     stable_input = input - max_input
     log_sum_exp = (stable_input.exp().sum(dim)).log()
-    
+
     # Compute log softmax
     return stable_input - log_sum_exp
 
@@ -174,7 +173,7 @@ def maxpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
     Returns:
     -------
         Tensor of shape (batch, channel, new_height, new_width) after max pooling.
-        
+
     """
     batch, channel, height, width = input.shape
     tiled, new_height, new_width = tile(input, kernel)
@@ -207,8 +206,10 @@ def dropout(input: Tensor, p: float, ignore: bool = False) -> Tensor:
     if p == 0:
         return input
     else:
-        mask = (rand(input.shape) > p) # Generate a random tensor and compare each element to p
-        
+        mask = (
+            rand(input.shape) > p
+        )  # Generate a random tensor and compare each element to p
+
         # Scale the active elements to maintain overall activation scale
         scale = 1.0 / (1.0 - p)
 

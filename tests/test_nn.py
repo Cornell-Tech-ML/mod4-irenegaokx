@@ -39,7 +39,7 @@ def test_max(t: Tensor) -> None:
 
     out = minitorch.nn.max(t, 1)
     assert_close(out[0, 0, 0], max([t[0, i, 0] for i in range(t.shape[1])]))
-    assert_close(out[1, 0, 2], max([t[1, i, 2] for i in range(t.shape[1])]))  
+    assert_close(out[1, 0, 2], max([t[1, i, 2] for i in range(t.shape[1])]))
 
     out = minitorch.nn.max(t, 2)
     assert_close(out[0, 0, 0], max([t[0, 0, i] for i in range(t.shape[2])]))
@@ -48,8 +48,7 @@ def test_max(t: Tensor) -> None:
     # Gradient checks for max reduction on all dimensions
     for dim in range(3):
         perturbed_t = t + minitorch.rand(t.shape) * 1e-4
-        minitorch.grad_check(lambda t: minitorch.nn.max(t, dim), perturbed_t)  
-
+        minitorch.grad_check(lambda t: minitorch.nn.max(t, dim), perturbed_t)
 
 
 @pytest.mark.task4_4

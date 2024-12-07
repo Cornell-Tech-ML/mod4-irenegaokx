@@ -95,16 +95,24 @@ def _tensor_conv1d(
         for o in prange(out_channels):  # Loop over each output channel
             for i in prange(out_width):  # Loop over each position in the output width
                 out_index = b * out_strides[0] + o * out_strides[1] + i * out_strides[2]
-                sum_val = 0.0 
+                sum_val = 0.0
                 for c in range(in_channels):  # Loop over each input channel
                     for k in range(kw):  # Loop over each kernel width
                         # Calculate position in the input based on the kernel position
                         in_pos = i - k if reverse else i + k
                         # Check boundary conditions and compute convolution if within bounds
                         if 0 <= in_pos < width:
-                            in_index = b * input_strides[0] + c * input_strides[1] + in_pos * input_strides[2]
-                            w_index = o * weight_strides[0] + c * weight_strides[1] + k * weight_strides[2]
-                            sum_val += input[in_index] * weight[w_index]  
+                            in_index = (
+                                b * input_strides[0]
+                                + c * input_strides[1]
+                                + in_pos * input_strides[2]
+                            )
+                            w_index = (
+                                o * weight_strides[0]
+                                + c * weight_strides[1]
+                                + k * weight_strides[2]
+                            )
+                            sum_val += input[in_index] * weight[w_index]
                 out[out_index] = sum_val
 
 
@@ -147,14 +155,14 @@ class Conv1dFun(Function):
         ----
             ctx : Context
             grad_output : Tensor
-                Gradient of the loss with respect to the output tensor 
+                Gradient of the loss with respect to the output tensor
                 (batch x out_channel x w).
 
         Returns:
         -------
             Tuple[Tensor, Tensor] :
                 - Gradient with respect to the input tensor (batch x in_channel x w).
-                - Gradient with respect to the weight tensor 
+                - Gradient with respect to the weight tensor
                   (out_channel x in_channel x kw).
 
         """
@@ -251,13 +259,18 @@ def _tensor_conv2d(
     # s20, s21, s22, s23 = s2[0], s2[1], s2[2], s2[3]
 
     # TODO: Implement for Task 4.2.
-    #raise NotImplementedError("Need to implement for Task 4.2")
-    
+    # raise NotImplementedError("Need to implement for Task 4.2")
+
     for b in prange(batch):
         for o in prange(out_channels):
             for y in prange(out_height):
                 for x in prange(out_weight):
-                    out_index = b * out_strides[0] + o * out_strides[1] + y * out_strides[2] + x * out_strides[3]
+                    out_index = (
+                        b * out_strides[0]
+                        + o * out_strides[1]
+                        + y * out_strides[2]
+                        + x * out_strides[3]
+                    )
                     sum_val = 0.0
                     for c in range(in_channels):
                         for ky in range(kh):
@@ -265,8 +278,18 @@ def _tensor_conv2d(
                                 iy = y - ky if reverse else y + ky
                                 ix = x - kx if reverse else x + kx
                                 if 0 <= iy < height and 0 <= ix < width:
-                                    in_index = b * input_strides[0] + c * input_strides[1] + iy * input_strides[2] + ix * input_strides[3]
-                                    w_index = o * weight_strides[0] + c * weight_strides[1] + ky * weight_strides[2] + kx * weight_strides[3]
+                                    in_index = (
+                                        b * input_strides[0]
+                                        + c * input_strides[1]
+                                        + iy * input_strides[2]
+                                        + ix * input_strides[3]
+                                    )
+                                    w_index = (
+                                        o * weight_strides[0]
+                                        + c * weight_strides[1]
+                                        + ky * weight_strides[2]
+                                        + kx * weight_strides[3]
+                                    )
                                     sum_val += input[in_index] * weight[w_index]
                     out[out_index] = sum_val
 
@@ -308,14 +331,14 @@ class Conv2dFun(Function):
         ----
             ctx : Context
             grad_output : Tensor
-                Gradient of the loss with respect to the output tensor 
+                Gradient of the loss with respect to the output tensor
                 (batch x out_channel x h x w).
 
         Returns:
         -------
             Tuple[Tensor, Tensor] :
                 - Gradient with respect to the input tensor (batch x in_channel x h x w).
-                - Gradient with respect to the weight tensor 
+                - Gradient with respect to the weight tensor
                   (out_channel x in_channel x kh x kw).
 
         """
