@@ -104,7 +104,7 @@ class CNNSentimentKim(minitorch.Module):
 
         # Apply sigmoid activation over the class dimension
         # Reshape the output to match the expected dimensions
-        return x.sigmoid().view(x.shape[0])       
+        return x.sigmoid().view(x.shape[0])
 
 
 # Evaluation helper methods
