@@ -35,7 +35,7 @@ class Conv1d(minitorch.Module):
 
     def forward(self, input):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        return minitorch.conv1d(input, self.weights.value) + self.bias.value
 
 
 class CNNSentimentKim(minitorch.Module):
@@ -62,14 +62,49 @@ class CNNSentimentKim(minitorch.Module):
         super().__init__()
         self.feature_map_size = feature_map_size
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+
+        # Convolutional layers for each filter size
+        self.conv1 = Conv1d(embedding_size, feature_map_size, filter_sizes[0])
+        self.conv2 = Conv1d(embedding_size, feature_map_size, filter_sizes[1])
+        self.conv3 = Conv1d(embedding_size, feature_map_size, filter_sizes[2])
+
+        # Fully connected layer
+        self.fc = Linear(feature_map_size, 1)
+
+        # Dropout layer
+        self.dropout = dropout
 
     def forward(self, embeddings):
         """
         embeddings tensor: [batch x sentence length x embedding dim]
         """
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        # Reshape embeddings for 1D convolutions (batch x embedding_dim x sentence_length)
+        x = embeddings.permute(0, 2, 1)
+
+        # Apply convolutions and ReLU activation for each filter size
+        conv1_out = self.conv1.forward(x).relu()
+        conv2_out = self.conv2.forward(x).relu()
+        conv3_out = self.conv3.forward(x).relu()
+
+        # Max-over-time pooling for each feature map
+        pooled1 = minitorch.max(conv1_out, dim=2)
+        pooled2 = minitorch.max(conv2_out, dim=2)
+        pooled3 = minitorch.max(conv3_out, dim=2)
+
+        # Sum the pooled outputs
+        x = pooled1 + pooled2 + pooled3
+
+        # Apply the fully connected layer and ReLU activation
+        x = x.view(x.shape[0], self.feature_map_size)
+        x = self.fc(x).relu()
+
+        # Apply dropout to the activations
+        x = minitorch.dropout(x, self.dropout, not self.training)
+
+        # Apply sigmoid activation over the class dimension
+        # Reshape the output to match the expected dimensions
+        return x.sigmoid().view(x.shape[0])
 
 
 # Evaluation helper methods
@@ -253,7 +288,7 @@ def encode_sentiment_data(dataset, pretrained_embeddings, N_train, N_val=0):
 
 
 if __name__ == "__main__":
-    train_size = 450
+    train_size = 1000
     validation_size = 100
     learning_rate = 0.01
     max_epochs = 250

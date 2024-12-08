@@ -38,6 +38,24 @@ class ScalarFunction:
 
     @classmethod
     def apply(cls, *vals: ScalarLike) -> Scalar:
+        """Applies the forward operation to the provided input values.
+
+        This method processes the given values and converts them into Scalar objects,
+        and stores their raw data for use in the forward operation.
+
+        Args:
+        ----
+            *vals:
+                A variable number of input values, which can be either `Scalar` objects or
+                other scalar-like types (e.g., `float`, `int`).
+
+        Returns:
+        -------
+            Scalar:
+                A new `Scalar` object that represents the result of applying the forward
+                operation on the inputs.
+
+        """
         raw_vals = []
         scalars = []
         for v in vals:
@@ -66,10 +84,12 @@ class Add(ScalarFunction):
 
     @staticmethod
     def forward(ctx: Context, a: float, b: float) -> float:
+        """Add two scalars."""
         return a + b
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> Tuple[float, ...]:
+        """Compute the gradients of the addition."""
         return d_output, d_output
 
 
@@ -78,15 +98,137 @@ class Log(ScalarFunction):
 
     @staticmethod
     def forward(ctx: Context, a: float) -> float:
+        """Compute the natural logarithm of a."""
         ctx.save_for_backward(a)
         return operators.log(a)
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the log function."""
         (a,) = ctx.saved_values
         return operators.log_back(a, d_output)
 
 
-# To implement.
+class Mul(ScalarFunction):
+    """Multiplication function $f(x, y) = x * y$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float, b: float) -> float:
+        """Multiply two scalars."""
+        ctx.save_for_backward(a, b)
+        return a * b
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> Tuple[float, float]:
+        """Compute the gradients of the multiplication."""
+        a, b = ctx.saved_values
+        return b * d_output, a * d_output
 
 
+class Inv(ScalarFunction):
+    """Inverse function $f(x) = 1 / x$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float) -> float:
+        """Compute the inverse of a scalar."""
+        ctx.save_for_backward(a)
+        return 1.0 / a
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the inverse function."""
+        (a,) = ctx.saved_values
+        return -1.0 / (a**2) * d_output
+
+
+class Neg(ScalarFunction):
+    """Negation function $f(x) = -x$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float) -> float:
+        """Negate a scalar."""
+        result = -float(a)
+        return result
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the negation."""
+        return -d_output
+
+
+class Sigmoid(ScalarFunction):
+    """Sigmoid function $f(x) = 1 / (1 + exp(-x))$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float) -> float:
+        """Compute the sigmoid function."""
+        result = 1.0 / (1.0 + operators.exp(-a))
+        ctx.save_for_backward(result)
+        return result
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the sigmoid function."""
+        (result,) = ctx.saved_values
+        return result * (1 - result) * d_output
+
+
+class ReLU(ScalarFunction):
+    """ReLU function $f(x) = max(0, x)$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float) -> float:
+        """Compute the ReLU of a scalar."""
+        ctx.save_for_backward(a)
+        return max(0.0, a)
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the ReLU function."""
+        (a,) = ctx.saved_values
+        return d_output if a > 0 else 0.0
+
+
+class Exp(ScalarFunction):
+    """Exponential function $f(x) = exp(x)$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float) -> float:
+        """Compute the exponential of a scalar."""
+        result = operators.exp(a)
+        ctx.save_for_backward(result)
+        return result
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> float:
+        """Compute the gradient of the exponential function."""
+        (result,) = ctx.saved_values
+        return result * d_output
+
+
+class LT(ScalarFunction):
+    """Less than function $f(x, y) = x < y$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float, b: float) -> float:
+        """Compare if a is less than b."""
+        return 1.0 if a < b else 0.0
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> Tuple[float, float]:
+        """No gradient needed for less-than comparison."""
+        return 0.0, 0.0
+
+
+class EQ(ScalarFunction):
+    """Equality function $f(x, y) = x == y$"""
+
+    @staticmethod
+    def forward(ctx: Context, a: float, b: float) -> float:
+        """Compare if a is equal to b."""
+        return 1.0 if a == b else 0.0
+
+    @staticmethod
+    def backward(ctx: Context, d_output: float) -> Tuple[float, float]:
+        """No gradient needed for equality comparison."""
+        return 0.0, 0.0
