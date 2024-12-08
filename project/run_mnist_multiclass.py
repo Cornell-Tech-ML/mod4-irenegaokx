@@ -42,7 +42,7 @@ class Conv2d(minitorch.Module):
 
     def forward(self, input):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        return minitorch.conv2d(input, self.weights.value) + self.bias.value
 
 
 class Network(minitorch.Module):
@@ -68,11 +68,38 @@ class Network(minitorch.Module):
         self.out = None
 
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        # Layers for the CNN
+        self.conv1 = Conv2d(1, 4, 3, 3)  # 1 input channel, 4 output channels, 3x3 kernel
+        self.conv2 = Conv2d(4, 8, 3, 3)  # 4 input channels, 8 output channels, 3x3 kernel
+        self.fc1 = Linear(392, 64)  # Fully connected layer: input size 392 -> output size 64
+        self.fc2 = Linear(64, C)  # Fully connected layer: input size 64 -> output size C
+        #self.dropout = minitorch.dropout(input, p = 0.25)
 
     def forward(self, x):
         # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        # Apply the first convolution + ReLU
+        self.mid = self.conv1.forward(x).relu()
+
+        # Apply the second convolution + ReLU
+        self.out = self.conv2.forward(self.mid).relu()
+
+        # Apply 2D pooling with a 4x4 kernel
+        x = minitorch.avgpool2d(self.out, (4, 4))
+
+        # Flatten the tensor to shape (BATCH, 392)
+        x = x.view(BATCH, 392)
+
+        # Apply the first linear layer + ReLU + Dropout
+        x = self.fc1.forward(x).relu()
+        x = minitorch.dropout(x, p=0.25)
+
+        # Apply the second linear layer
+        x = self.fc2(x)
+
+        # Apply LogSoftmax over the class dimension
+        x = minitorch.logsoftmax(x, dim=1)
+
+        return x
 
 
 def make_mnist(start, stop):
@@ -171,4 +198,4 @@ class ImageTrain:
 
 if __name__ == "__main__":
     data_train, data_val = (make_mnist(0, 5000), make_mnist(10000, 10500))
-    ImageTrain().train(data_train, data_val, learning_rate=0.01)
+    ImageTrain().train(data_train, data_val, learning_rate=0.01, max_epochs=35)
